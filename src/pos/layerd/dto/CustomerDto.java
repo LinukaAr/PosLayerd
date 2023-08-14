@@ -159,5 +159,5 @@ public class CustomerDto {
     @Override
     public String toString() {
         return "CustomerDto{" + "id=" + id + ", titile=" + titile + ", name=" + name + ", dob=" + dob + ", salary=" + salary + ", address=" + address + ", city=" + city + ", province=" + province + ", zip=" + zip + '}';
-    }    
+    }     
 }
