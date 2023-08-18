@@ -1,11 +1,36 @@
 
 package pos.layerd.view;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import pos.layerd.controller.CustomerController;
+import pos.layerd.controller.ItemController;
+import pos.layerd.controller.OrderController;
+import pos.layerd.dto.CustomerDto;
+import pos.layerd.dto.ItemDto;
+import pos.layerd.dto.OrderDetailDto;
+import pos.layerd.dto.OrderDto;
 
 public class OrderPanel extends javax.swing.JPanel {
 
+    private List<OrderDetailDto> orderDetailDtos = new ArrayList<>();
+
+    private CustomerController customerController;
+    private ItemController itemController;
+    private OrderController orderController;
+
     
     public OrderPanel() {
+        customerController = new CustomerController();
+        itemController = new ItemController();
+        orderController = new OrderController();
         initComponents();
+
+        loadTable();
     }
 
     
@@ -285,4 +310,80 @@ public class OrderPanel extends javax.swing.JPanel {
     private javax.swing.JButton searchItemButton;
     private javax.swing.JPanel tablePanel;
     // End of variables declaration//GEN-END:variables
+
+      
+
+    private void loadTable() {
+        String[] collumns = {"Item Code", "Qty", "Discount"};
+        DefaultTableModel dtm = new DefaultTableModel(collumns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+
+        };
+        itemTable.setModel(dtm);
+    }
+
+    private void searchCustomer() {
+
+        try {
+            String custId = customerIdText.getText();
+            CustomerDto cust = customerController.getCustomer(custId);
+            if (cust != null) {
+                cutDataLabel.setText(cust.getName() + ", " + cust.getAddress());
+            } else {
+                JOptionPane.showMessageDialog(this, "Customer Not Found");
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(OrderPanel.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage());
+        }
+    }
+
+    private void searchItem() {
+        try {
+            String itemId = itemIdText.getText();
+            ItemDto item = itemController.getItem(itemId);
+            if (item != null) {
+                itemDataLabel.setText(item.getDescription() + ", " + item.getUnitPrice() + ", " + item.getQoh());
+            } else {
+                JOptionPane.showMessageDialog(this, "Item Not Found");
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(OrderPanel.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage());
+        }
+    }
+
+    private void addToTable() {
+        OrderDetailDto od = new OrderDetailDto(itemIdText.getText(), Integer.parseInt(qtyText.getText()), Double.parseDouble(discountText.getText()));
+        orderDetailDtos.add(od);
+
+        Object[] rowData = {od.getItemId(), od.getQty(), od.getDiscount()};
+
+        DefaultTableModel dtm = (DefaultTableModel) itemTable.getModel();
+        dtm.addRow(rowData);
+
+        cleanItemData();
+
+    }
+
+    private void cleanItemData() {
+        itemIdText.setText("");
+        discountText.setText("");
+        qtyText.setText("");
+        itemDataLabel.setText("");
+    }
+
+    private void placeOrder() {
+        try {
+            OrderDto orderDto = new OrderDto(orderIdText.getText(), customerIdText.getText(), orderDetailDtos);
+            String result = orderController.placeOrder(orderDto);
+            JOptionPane.showMessageDialog(this, result);
+        } catch (Exception ex) {
+            Logger.getLogger(OrderPanel.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage());
+        }
+    }
 }
